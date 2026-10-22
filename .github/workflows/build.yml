@@ -1,0 +1,34 @@
+name: Build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build QuickRun.exe
+        shell: powershell
+        run: .\build.ps1
+
+      - name: Selftest
+        shell: powershell
+        run: |
+          $homeDir = Join-Path $env:RUNNER_TEMP 'quickrun-selftest'
+          New-Item -ItemType Directory -Force $homeDir | Out-Null
+          $env:QUICKRUN_HOME = $homeDir
+          $report = Join-Path $env:RUNNER_TEMP 'selftest.txt'
+          $process = Start-Process -FilePath .\QuickRun.exe -ArgumentList '--selftest', "`"$report`"" -Wait -PassThru
+          if ($process.ExitCode -ne 0) { throw "Selftest failed: exit $($process.ExitCode)" }
+          Get-Content -Encoding UTF8 $report
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: QuickRun
+          path: QuickRun.exe

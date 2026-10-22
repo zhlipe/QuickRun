@@ -1,0 +1,17 @@
+# 构建产物
+QuickRun.exe
+QuickRunData/
+
+# 本地发布包：请上传到 GitHub Releases，而不是提交到仓库
+dist/
+
+# 测试/临时文件
+tests/UiSmokeTest.exe
+tests/probe.txt
+*.tmp
+*.log
+
+# IDE / 本地设置
+.vs/
+*.user
+*.suo
