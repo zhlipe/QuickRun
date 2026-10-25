@@ -2849,15 +2849,10 @@ namespace QuickRun
 
         private void ShowAbout()
         {
-            MessageBox.Show(this,
-                "QuickRun " + AppEnv.Version + "\r\n" +
-                "作者：zhlipe\r\n\r\n" +
-                "拖入 exe / 快捷方式 → 自动生成 .lnk 快捷方式 → 自动维护用户 PATH。\r\n" +
-                "无需管理员权限，只写当前用户目录、快捷方式目录和 HKCU 的 PATH。\r\n\r\n" +
-                "数据目录：" + AppEnv.Root + "\r\n" +
-                "快捷方式目录：" + AppEnv.AliasDir + "\r\n" +
-                "日志：" + AppEnv.LogFile,
-                "关于 QuickRun", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            using (AboutDialog dialog = new AboutDialog())
+            {
+                dialog.ShowDialog(this);
+            }
         }
 
         private void ChangeAliasDirectory()
@@ -3677,6 +3672,179 @@ namespace QuickRun
             sb.AppendLine();
             sb.AppendLine("作者：zhlipe");
             return sb.ToString();
+        }
+    }
+
+    // =================================================================
+    // 关于对话框
+    // =================================================================
+    internal sealed class AboutDialog : Form
+    {
+        private const string GitHubUrl = "https://github.com/zhlipe/QuickRun";
+        private const string GitHubLabel = "github.com/zhlipe/QuickRun";
+        private const string GitHubMarkBase64 = "iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAP9SURBVFhH1VdZS5VRFHUeM+epkAYRNYjAbqGm2YBJLxmV9CQNEpVlkILVD0hJm8BIKzCxNNBKMaiXTM03U1Mje/FBXxX1QRxwWp21/T693vvpvQplLTjw3bP3XnudaZ9zHebn5/tUG96g1kcBY9ggMDcFDGu//zqY+/8SMDs7i5aWFhQWFODC+fM4mZ6OkydOyDf7mpubMTMzo3nbht0C5ubm8KysDPv27oWXhwecHR3h5uICT3d3afxmH20m5VNWWoo5JdYW7BLwq7cXh1JS4OjggE1eXggJCkJocLBho40+9E1JTkbvz58aizFsCmhtbcWWsDC4OTsjdJXERo2zEh4aiq9qyVbCqgJ+9PQIEUcU4OcHb09PIQ0KCJD+4MBABPr7S+M3+2ijD30Zo89Yd3e3xrocKwqYmJjAfpMJHm5usq6XsrLwpbERN3JyJAnX29/XF1vDw6UxGfso5np2Nho/f8aVy5cllhymuDiMj49r7EtYUcC9wkI4qHUMCwmBi5MT3tbWahags7MTVVVV6Pr+HQP9/RgYGEBXVxeqVV97e7vmBdTX18NVLR05yFVw965mWYKhgNHRUUTu2AG/zZtlWklSWVmpWe3Hm+pqiSUHuXZu346R4eVjNRTAkXA6GcjmpNS/eP5cs9qPioqKZTz8fv3qlWZdgKGArIsXF3a9CvLx9kZSYiKmpqY0q/2Ynp7GYXV8uRHJxc3JgmUOKwHqWxIyMYO4/g8fPNCsa8eTkhLh0AdzICFBcuiwEjA2NoZdsbGL60/V79+906xrx4eGBri7ugoXOXfFxEgOHVYCRkZGEB0VJUeMQdxE3EzrBU8PB0EucpKbOXRYCZianMSe3bvh6+MjQS5q4xgdH3tRXFS0uBHJSW7m0GElgDiWmioFhEGsaEePHNEsa0ea4iIHuchJbnMYCriVn7+ompWNU7ieZaipqZGbUr+8yElucxgK4OXB8snA2OhoGQGP0svycnkP2AJ9ypUvS7a+l8hFTsuLyVAA7/6DSUlwUoofP3qEb21t2BYRIeWUxygvN1fuBUuwL/fmTSTEx8vO5/3AMkwBnAlyktschgKITx8/ypRx3ZqamqT+cwQUwVZrdjfoqKurE5teePTG0bMWkNMSKwogrl29KoQ8OkRHRwfy8vJQ+vSp4bNLv0M4cj25fhFlKy4jrCpgUh2X42lpQnAuMxPDFheJJSjAvIaw8WVEDnIZYVUBBKtWxunTIoKEfO/xqWVeTHRQYFRkpMwARTDmzKlTyyqfJWwK0HG/uFjWkqQsKENDQ5plCUODgyKSPnzGMcYW7BZA8OFx5/ZtnM3IMHzdsI82+tDXHqxJwJ/APyNgw/+cbuDf8/m+3wZtKojMf0nHAAAAAElFTkSuQmCC";
+        private static Image _githubMark;
+
+        public AboutDialog()
+        {
+            Text = "关于 QuickRun";
+            Font = Theme.FontUI;
+            BackColor = Theme.Bg;
+            ClientSize = new Size(560, 440);
+            FormBorderStyle = FormBorderStyle.FixedDialog;
+            MaximizeBox = false;
+            MinimizeBox = false;
+            ShowInTaskbar = false;
+            StartPosition = FormStartPosition.CenterParent;
+            Icon = SystemIcons.Application;
+
+            TableLayoutPanel root = new TableLayoutPanel();
+            root.Dock = DockStyle.Fill;
+            root.ColumnCount = 1;
+            root.RowCount = 3;
+            root.BackColor = Theme.Bg;
+            root.Padding = new Padding(20, 16, 20, 14);
+            root.RowStyles.Add(new RowStyle(SizeType.Absolute, 42f));
+            root.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
+            root.RowStyles.Add(new RowStyle(SizeType.Absolute, 46f));
+            Controls.Add(root);
+
+            Label title = new Label();
+            title.Text = "关于 QuickRun";
+            title.Font = Theme.FontDialogTitle;
+            title.ForeColor = Theme.Text;
+            title.AutoSize = true;
+            title.Dock = DockStyle.Fill;
+            title.TextAlign = ContentAlignment.MiddleLeft;
+            title.BackColor = Theme.Bg;
+            root.Controls.Add(title, 0, 0);
+
+            CardPanel card = new CardPanel();
+            card.Dock = DockStyle.Fill;
+            card.Padding = new Padding(22, 18, 22, 18);
+            root.Controls.Add(card, 0, 1);
+
+            TableLayoutPanel body = new TableLayoutPanel();
+            body.Dock = DockStyle.Fill;
+            body.ColumnCount = 1;
+            body.RowCount = 5;
+            body.BackColor = Theme.Card;
+            body.RowStyles.Add(new RowStyle(SizeType.Absolute, 40f));
+            body.RowStyles.Add(new RowStyle(SizeType.Absolute, 52f));
+            body.RowStyles.Add(new RowStyle(SizeType.Absolute, 26f));
+            body.RowStyles.Add(new RowStyle(SizeType.Absolute, 30f));
+            body.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
+            card.Controls.Add(body);
+
+            Label appName = new Label();
+            appName.Text = "QuickRun  " + AppEnv.Version;
+            appName.Font = Theme.FontTitle;
+            appName.ForeColor = Theme.Text;
+            appName.AutoSize = true;
+            appName.TextAlign = ContentAlignment.MiddleLeft;
+            appName.BackColor = Theme.Card;
+            body.Controls.Add(appName, 0, 0);
+
+            Label description = new Label();
+            description.Text = "拖入 exe / 快捷方式 → 自动生成 .lnk 快捷方式 → 自动维护用户 PATH。\r\n" +
+                "无需管理员权限，只写当前用户目录、快捷方式目录和 HKCU 的 PATH。";
+            description.Font = Theme.FontUI;
+            description.ForeColor = Theme.Text;
+            description.Dock = DockStyle.Fill;
+            description.TextAlign = ContentAlignment.TopLeft;
+            description.BackColor = Theme.Card;
+            body.Controls.Add(description, 0, 1);
+
+            Label author = new Label();
+            author.Text = "作者：zhlipe";
+            author.Font = Theme.MakeFont(10F, FontStyle.Bold);
+            author.ForeColor = Theme.Text;
+            author.AutoSize = true;
+            author.TextAlign = ContentAlignment.MiddleLeft;
+            author.BackColor = Theme.Card;
+            body.Controls.Add(author, 0, 2);
+
+            FlowLayoutPanel githubRow = new FlowLayoutPanel();
+            githubRow.FlowDirection = FlowDirection.LeftToRight;
+            githubRow.WrapContents = false;
+            githubRow.AutoSize = true;
+            githubRow.BackColor = Theme.Card;
+            githubRow.Margin = new Padding(0);
+
+            PictureBox githubIcon = new PictureBox();
+            githubIcon.Image = GetGitHubMark();
+            githubIcon.Size = new Size(18, 18);
+            githubIcon.SizeMode = PictureBoxSizeMode.Zoom;
+            githubIcon.BackColor = Color.Transparent;
+            githubIcon.Margin = new Padding(0, 1, 7, 0);
+            githubRow.Controls.Add(githubIcon);
+
+            LinkLabel githubLink = new LinkLabel();
+            githubLink.Text = GitHubLabel;
+            githubLink.AutoSize = true;
+            githubLink.Font = Theme.MakeFont(9.5F, FontStyle.Bold);
+            githubLink.LinkColor = Theme.Primary;
+            githubLink.ActiveLinkColor = Theme.PrimaryDark;
+            githubLink.VisitedLinkColor = Theme.Primary;
+            githubLink.Links.Add(0, GitHubLabel.Length, GitHubUrl);
+            githubLink.LinkClicked += delegate { OpenExternalLink(GitHubUrl); };
+            githubRow.Controls.Add(githubLink);
+            body.Controls.Add(githubRow, 0, 3);
+
+            Label details = new Label();
+            details.Text = "数据目录：" + AppEnv.Root + "\r\n" +
+                "快捷方式目录：" + AppEnv.AliasDir + "\r\n" +
+                "日志：" + AppEnv.LogFile;
+            details.Font = Theme.FontSmall;
+            details.ForeColor = Theme.Muted;
+            details.AutoSize = true;
+            details.MaximumSize = new Size(490, 0);
+            details.BackColor = Theme.Card;
+            body.Controls.Add(details, 0, 4);
+
+            TableLayoutPanel buttons = new TableLayoutPanel();
+            buttons.Dock = DockStyle.Fill;
+            buttons.ColumnCount = 2;
+            buttons.RowCount = 1;
+            buttons.BackColor = Theme.Bg;
+            buttons.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
+            buttons.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 96f));
+            root.Controls.Add(buttons, 0, 2);
+
+            RoundedButton close = new RoundedButton("关闭", ButtonKind.Secondary);
+            close.Dock = DockStyle.Fill;
+            close.Margin = new Padding(0, 5, 0, 5);
+            close.DialogResult = DialogResult.Cancel;
+            buttons.Controls.Add(close, 1, 0);
+            CancelButton = close;
+            AcceptButton = close;
+        }
+
+        private static Image GetGitHubMark()
+        {
+            if (_githubMark == null)
+            {
+                byte[] bytes = Convert.FromBase64String(GitHubMarkBase64);
+                using (MemoryStream stream = new MemoryStream(bytes))
+                using (Image image = Image.FromStream(stream))
+                {
+                    _githubMark = new Bitmap(image);
+                }
+            }
+            return _githubMark;
+        }
+
+        private void OpenExternalLink(string url)
+        {
+            try
+            {
+                Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(this, "打开浏览器失败：" + ex.Message, "打开链接",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
         }
     }
 
